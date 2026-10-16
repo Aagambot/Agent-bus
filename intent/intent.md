@@ -5,7 +5,7 @@
 > The PRD (`PRD Shared Memory Bus for Multi-Agent Systems.md`) is the full source of truth;
 > this file condenses it for Claude sessions and subagents.
 >
-> **Last updated:** 2026-10-17 | **Status:** Draft — Open questions not yet answered (see Step 3)
+> **Last updated:** 2026-10-17 | **Status:** OQ-1 through OQ-7 answered by Phase 0 discovery. OQ-8 and OQ-9 intentionally deferred.
 
 ---
 
@@ -102,15 +102,192 @@ Everything else (snapshots, restore, event log, ACLs) supports these three verbs
 
 | ID | Question | Source in PRD | Status | Answer / Resolution |
 |----|----------|---------------|--------|---------------------|
-| OQ-1 | What is the exact context-mode DB schema? (table names, columns, indexes, FTS5 virtual tables) | §5.2, §7, bridge design | ❓ Unanswered | — |
-| OQ-2 | What do context-mode hook payloads look like? (event types, payload shape, priority tiers) | §5.2 architecture diagram | ❓ Unanswered | — |
-| OQ-3 | What FTS5 tokenizer settings does context-mode use? (porter stemmer, trigram, column weights) | §6.1 FR-2 | ❓ Unanswered | — |
-| OQ-4 | Is FTS5 + trigram tokenizer available in Python's bundled `sqlite3` on Linux/macOS/Windows? | NFR-4 | ❓ Unanswered | — |
-| OQ-5 | What are the current LangGraph `BaseStore` method signatures? (`put`, `get`, `delete`, `search`, `list_namespaces` — sync and async) | FR-21 | ❓ Unanswered | — |
-| OQ-6 | Does Python 3.10 cover the current LangChain/LangGraph support range? | NFR-7 | ❓ Unanswered | — |
-| OQ-7 | Does context-mode expose events via DB file, MCP tool, or both? Which is more stable? | Q1, FR-26 | ❓ Unanswered | — |
-| OQ-8 | Is exposing `agentbus` as a context-mode MCP companion better than standalone-first? | Q2 | ❓ Unanswered (decide post-Phase 1) | — |
-| OQ-9 | Which benchmark tasks are representative and reproducible for the evaluation? | Q3, §10.2 | ❓ Unanswered (decide in Phase 3 planning) | — |
+| OQ-1 | What is the exact context-mode DB schema? | §5.2, §7, bridge design | ✅ Answered | See detail below |
+| OQ-2 | What do context-mode hook payloads look like? | §5.2 architecture diagram | ✅ Answered | See detail below |
+| OQ-3 | What FTS5 tokenizer settings does context-mode use? | §6.1 FR-2 | ✅ Answered | See detail below |
+| OQ-4 | Is FTS5 + trigram available in Python's bundled `sqlite3`? | NFR-4 | ✅ Answered | Conditional — see detail below |
+| OQ-5 | What are the current LangGraph `BaseStore` method signatures? | FR-21 | ✅ Answered | See detail below |
+| OQ-6 | Does Python 3.10 cover the current LangChain/LangGraph support range? | NFR-7 | ✅ Answered | Yes — see detail below |
+| OQ-7 | Does context-mode expose events via DB file, MCP tool, or both? | Q1, FR-26 | ✅ Answered | Both — DB file is more stable |
+| OQ-8 | Is `agentbus` better as a context-mode MCP companion or standalone-first? | Q2 | ⏳ Deferred (decide post-Phase 1) | — |
+| OQ-9 | Which benchmark tasks are representative and reproducible? | Q3, §10.2 | ⏳ Deferred (decide in Phase 3 planning) | — |
+
+---
+
+## Phase 0 Discovery — Detailed Answers
+
+### OQ-1: context-mode DB Schema
+
+**Two separate SQLite databases; both in WAL mode.**
+
+#### ContentStore (`/tmp/context-mode-<PID>.db`) — ephemeral, per-process
+Source: `src/store.ts`
+
+```sql
+CREATE TABLE sources (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  label           TEXT NOT NULL,
+  chunk_count     INTEGER NOT NULL DEFAULT 0,
+  code_chunk_count INTEGER NOT NULL DEFAULT 0,
+  indexed_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  file_path       TEXT,
+  content_hash    TEXT
+);
+CREATE INDEX idx_sources_label ON sources(label);
+
+CREATE VIRTUAL TABLE chunks USING fts5(
+  title, content,
+  source_id UNINDEXED, content_type UNINDEXED,
+  source_category UNINDEXED, session_id UNINDEXED,
+  event_id UNINDEXED, timestamp UNINDEXED,
+  tokenize='porter unicode61'
+);
+
+CREATE VIRTUAL TABLE chunks_trigram USING fts5(
+  title, content,
+  source_id UNINDEXED, content_type UNINDEXED,
+  source_category UNINDEXED, session_id UNINDEXED,
+  event_id UNINDEXED, timestamp UNINDEXED,
+  tokenize='trigram'
+);
+
+CREATE TABLE vocabulary (word TEXT PRIMARY KEY);
+```
+
+#### SessionDB (`~/.claude/context-mode/sessions/<hash>.db`) — persistent, per-project
+Source: `src/session/db.ts` + search research
+
+```sql
+CREATE TABLE events (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id   TEXT NOT NULL,
+  type         TEXT NOT NULL,      -- e.g. file_read, file_write, error_tool, git_commit
+  category     TEXT NOT NULL,      -- e.g. file, error, git, task, decision, rule, cwd
+  data         TEXT NOT NULL,      -- full payload, no truncation
+  priority     INTEGER NOT NULL,   -- 1=critical .. 5=low
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  model_id     TEXT,
+  input_tokens  INTEGER,
+  output_tokens INTEGER,
+  cost_usd     REAL,
+  bytes_avoided INTEGER,
+  bytes_retrieved INTEGER
+);
+
+CREATE TABLE sessions (
+  id          TEXT PRIMARY KEY,   -- session hash
+  project_dir TEXT NOT NULL,
+  started_at  TEXT NOT NULL
+);
+
+CREATE TABLE snapshots (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  session_id  TEXT NOT NULL,
+  built_at    TEXT NOT NULL,
+  budget_bytes INTEGER,
+  body        TEXT NOT NULL      -- compressed resume snippet < 2KB
+);
+```
+
+**Implication:** `agentbus` table designs mirror these patterns. Implement independently — do not copy upstream code.
+
+---
+
+### OQ-2: Hook Payload Shape
+
+Source: `src/session/extract.ts` — hooks communicate via **JSON over stdin/stdout**.
+
+```typescript
+interface HookInput {
+  tool_name: string;                          // e.g. "Bash", "Read", "Write"
+  tool_input: Record<string, unknown>;         // tool-specific args
+  tool_response?: string;                     // stdout from the tool
+  tool_output?: { isError?: boolean; is_error?: boolean };
+}
+```
+
+**Hook lifecycle (files in `hooks/<platform>/`):**
+
+| Hook | Fires when |
+|------|------------|
+| `sessionstart.mjs` | Session begins or resumes |
+| `userpromptsubmit.mjs` | User submits a prompt |
+| `pretooluse.mjs` | Before a tool is invoked |
+| `posttooluse.mjs` | After a tool finishes — main extraction point |
+| `precompact.mjs` | Before context compaction — builds snapshot |
+| `stop.mjs` | Agent turn ends |
+
+**Event types extracted by posttooluse:**
+`file_read`, `file_write`, `file_edit`, `file_glob`, `file_search`, `rule`, `rule_content`, `cwd`, `error_tool`, `git`, `git_commit`, `task`, `task_create`, `task_update`, `plan_enter`, `plan_exit`, `plan_approved`, `plan_rejected`
+
+**Priority tiers:** 1 = critical (rules, files, tasks) ... 5 = low
+
+**Compaction response:** `{ "additional_context": "<compressed summary < 2KB>" }`
+
+**Implication:** `agentbus-bridge` reads SessionDB `events` table directly — more stable than parsing hook payloads.
+
+---
+
+### OQ-3: FTS5 Tokenizer Settings
+
+Source: `src/store.ts` lines 483-505
+
+| Table | Tokenizer | Purpose |
+|-------|-----------|--------|
+| `chunks` | `porter unicode61` | Stemmed word-variant search |
+| `chunks_trigram` | `trigram` | Substring / partial-identifier search (min 3 chars) |
+
+**Merge strategy:** BM25 scores from both tables merged with Reciprocal Rank Fusion in application code. Chunk size cap: 4096 bytes. Stopword filtering + fuzzy levenshtein correction + proximity-span reranking in application code.
+
+**Implication:** Our dual-FTS5 design is confirmed. Implement RRF in Python, not SQL.
+
+---
+
+### OQ-4: FTS5 + Trigram in Python's bundled `sqlite3`
+
+**Conditional** — requires SQLite >= 3.34.0 (Dec 2020):
+- Windows/macOS (python.org installers): bundled SQLite >= 3.35 ✅
+- Linux Ubuntu 22.04+ ships SQLite 3.37+ ✅ | Ubuntu 20.04 ships 3.31 ❌
+
+**Decision:** Add a startup capability check; require SQLite >= 3.34.0; document in install instructions. Fail fast with a clear error message if trigram is unavailable.
+
+---
+
+### OQ-5: LangGraph `BaseStore` Method Signatures
+
+Source: LangGraph docs, `langgraph.store.base.BaseStore`
+
+| Async method | Signature |
+|-------------|----------|
+| `aput` | `(namespace: tuple[str,...], key: str, value: dict, index=None) -> None` |
+| `aget` | `(namespace: tuple[str,...], key: str) -> Item | None` |
+| `adelete` | `(namespace: tuple[str,...], key: str) -> None` |
+| `asearch` | `(namespace_prefix: tuple[str,...], *, query: str|None=None, filter: dict|None=None, limit: int=10, offset: int=0) -> list[SearchResult]` |
+| `alist_namespaces` | `(*, prefix=None, suffix=None, max_depth=None, limit=100, offset=0) -> list[tuple[str,...]]` |
+
+Sync equivalents (`put`, `get`, `delete`, `search`, `list_namespaces`) wrap the async methods.
+Return types: `Item(namespace, key, value, created_at, updated_at)`, `SearchResult(namespace, key, value, score)`
+
+**Implication:** Implement async methods as primary contract. Namespaces are tuples — store as `":".join(namespace)` in SQLite. `asearch.query` is where FTS5/RRF plugs in.
+
+---
+
+### OQ-6: Python 3.10 Coverage
+
+**Confirmed.** LangChain >= 0.1 and LangGraph >= 0.1 both support Python 3.9+; 3.10 is safe and recommended. Enforce `python_requires >= '3.10'` in `pyproject.toml`.
+
+---
+
+### OQ-7: How context-mode Exposes Events
+
+**Both DB file and MCP tools; DB file is the stable interface for `agentbus-bridge`.**
+
+- **DB file** (`~/.claude/context-mode/sessions/<hash16>.db`): Direct SQLite read. Schema defined in `src/session/db.ts`. Stable at table/column level. WAL-safe for concurrent reads.
+- **MCP tools** (`ctx_search`, `ctx_fetch_and_index`, `ctx_session_restore`, etc.): Designed for agent consumption; signatures change with platform adapters.
+
+**File path formula:** `<CONTEXT_MODE_DIR or ~/.claude>/context-mode/sessions/<sha256(canonicalized_projectDir)[0:16]><worktreeSuffix>.db`
+
+**Bridge design:** `agentbus-bridge` opens SessionDB as read-only (`uri=True, mode=ro` in Python), respects WAL mode, queries `events` table with a cursor. No MCP dependency.
 
 ---
 

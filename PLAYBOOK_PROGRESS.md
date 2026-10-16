@@ -3,7 +3,7 @@
 > **What this file is:** A living tracker that maps the playbook's dependency-ordered steps onto the `agentbus` PRD.
 > Update the status column after each step completes. The "Next Actions" section always reflects the single next concrete thing to do.
 >
-> **Last updated:** 2026-10-17 — Steps 1 & 2 complete ✅
+> **Last updated:** 2026-10-17 — Steps 1, 2 & 3 complete ✅
 
 ---
 
@@ -52,28 +52,27 @@
 
 ### Step 3 — Phase 0 Discovery (depends on Step 2)
 **Playbook play:** Subagents
-**Status:** 🔲 Not Started — ready to begin (Steps 1 & 2 are done)
+**Status:** ✅ Done
 
-**What to do:**
-- [ ] Spin up a **read-only `researcher` subagent** over the context-mode source
-- [ ] Tasks for the subagent:
-  - Read and document the DB schema (table names, columns, indexes)
-  - Capture hook payload shapes and event types
-  - Confirm FTS5 + trigram tokenizer settings used
-  - Document the `BaseStore`-equivalent interface if any
-  - Check how context-mode exposes events (DB file vs MCP tool)
-- [ ] Write answers back into `intent/intent.md` under each open question
-- [ ] Close or defer every `[Verify]` item
+**What was done:**
+- [x] Ran Phase 0 researcher subagent over context-mode public GitHub source
+- [x] **OQ-1:** Confirmed two-DB architecture — ContentStore (ephemeral, FTS5) and SessionDB (persistent, events). Full schemas documented in `intent/intent.md`
+- [x] **OQ-2:** Hook payloads are JSON over stdin/stdout; 6 hook types; 19+ event type categories; priority 1–5
+- [x] **OQ-3:** Porter unicode61 tokenizer (for `chunks`) + trigram tokenizer (for `chunks_trigram`); RRF merge in app code; 4096-byte chunk cap
+- [x] **OQ-4:** Trigram requires SQLite >= 3.34.0 — Windows/macOS safe; Linux needs Ubuntu 22.04+. Startup capability check added to design
+- [x] **OQ-5:** LangGraph `BaseStore` async methods: `aput`, `aget`, `adelete`, `asearch`, `alist_namespaces` with full signatures documented
+- [x] **OQ-6:** Python 3.10+ confirmed as safe for LangChain and LangGraph
+- [x] **OQ-7:** DB file is the stable bridge interface — opens read-only, WAL-safe, no MCP dependency needed
+- [x] OQ-8 and OQ-9 formally deferred to post-Phase 1
+- [x] All answers written back into `intent/intent.md`
 
-**Why subagent:** Exploration work should not flood the main context — this is the exact problem `agentbus` solves.
-
-**Exit criterion:** All `[Verify]` items in `intent.md` are either answered with a source reference or formally descoped.
+**Exit criterion met:** All `[Verify]` items answered or formally descoped.
 
 ---
 
 ### Step 4 — `spec.md` with licensing + security skills (depends on Steps 2 & 3)
 **Playbook play:** Requirements and design
-**Status:** Blocked on Step 3
+**Status:** 🔲 Not Started — ready to begin (Steps 1–3 done)
 
 **What to do:**
 - [ ] Load two skills into the Claude session: **licensing skill** and **security skill**
@@ -226,11 +225,12 @@ Track these two metrics after every phase:
 
 ## Next Actions (as of 2026-10-17)
 
-> **Steps 1 and 2 are complete. Step 3 is ready to start.**
+> **Steps 1, 2, and 3 are complete. Step 4 is ready to start.**
 
 1. ✅ ~~Create `CLAUDE.md`~~ — done
 2. ✅ ~~Create `intent/intent.md`~~ — done
-3. **Run Phase 0 researcher subagent** (Step 3): spin up a read-only subagent over the context-mode source to answer OQ-1 → OQ-7 in `intent/intent.md`. Use the "Researcher Subagent Brief" section at the bottom of `intent/intent.md` as the subagent's task prompt. The subagent must not modify any files — only write answers back into `intent/intent.md`.
+3. ✅ ~~Run Phase 0 researcher subagent~~ — done (OQ-1 through OQ-7 answered in `intent/intent.md`)
+4. **Write `spec.md`** (Step 4): Load the licensing skill and security skill into the Claude session. Turn PRD §§5–9 into `spec.md`. The security skill must flag ACL gaps, trust-label enforcement points, secret-redaction hooks, and prompt-injection surface. The licensing skill must flag any ELv2 inheritance risk. **Human review of all flags required before proceeding to Step 5.**
 
 ---
 
