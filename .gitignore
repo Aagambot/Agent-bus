@@ -13,3 +13,7 @@ dist/
 build/
 *.egg-info/
 .DS_Store
+/docs/plans/*
+/intent/*
+/docs/specs/*
+
