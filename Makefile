@@ -1,4 +1,4 @@
-.PHONY: test test-concurrency test-crash-safety coverage
+.PHONY: test test-concurrency test-crash-safety coverage hooks
 
 test:
 	pytest -x --tb=short
@@ -11,3 +11,6 @@ test-crash-safety:
 
 coverage:
 	pytest --cov=agentbus --cov-report=term-missing
+
+hooks:
+	python scripts/hooks/check_hooks.py

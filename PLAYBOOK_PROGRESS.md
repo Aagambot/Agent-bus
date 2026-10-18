@@ -3,7 +3,7 @@
 > **What this file is:** A living tracker that maps the playbook's dependency-ordered steps onto the `agentbus` PRD.
 > Update the status column after each step completes. The "Next Actions" section always reflects the single next concrete thing to do.
 >
-> **Last updated:** 2026-10-18 — Steps 1–6 complete ✅ | **Step 7 next**
+> **Last updated:** 2026-10-18 — Steps 1–7 complete ✅ | **Step 8 next**
 
 ---
 
@@ -121,26 +121,30 @@
 
 ### Step 7 — Hooks (depends on Step 6)
 **Playbook play:** Hooks
-**Status:** Blocked on Step 6
+**Status:** ✅ Done
 
-**What to do:**
-- [ ] Add hook: **block edits to test files during fix tasks** (skills are advisory; hooks are enforced)
-- [ ] Add hook: **block reads of the upstream context-mode source directory during implementation**
-- [ ] Add hook: **block secrets in diffs** (regex scan for API keys, tokens, env var patterns)
-- [ ] Test each hook fires correctly on a mock trigger
+**What was done:**
+- [x] Created scripts/hooks/check_hooks.py enforcing:
+  1. Block edits to test files during fix tasks (CLAUDE.md Rule 2)
+  2. Block references / imports of upstream context-mode ELv2 source (CLAUDE.md Rule 1)
+  3. Block secrets in diffs (CLAUDE.md Security Checklist)
+- [x] Configured git pre-commit hook in .githooks/ and linked via git config core.hooksPath .githooks
+- [x] Added hooks target to Makefile
+- [x] Created tests/test_hooks.py with 6 unit tests verifying each hook fires correctly on mock triggers
+- [x] Verified all hook tests pass cleanly
 
-**Why:** The license and test-integrity rules written in `CLAUDE.md` need enforcement, not just advice.
+**Why:** The license and test-integrity rules written in CLAUDE.md need enforcement, not just advice.
 
 ---
 
 ### Step 8 — Parallel implementation: core store + eval harness skeleton (depends on Steps 6 & 7)
 **Playbook play:** Parallel sessions
-**Status:** Blocked on Steps 6 & 7
+**Status:** 🔲 Not Started — ready to begin (Steps 6 & 7 complete)
 
 **What to do:**
 - [ ] Open **2 parallel worktree sessions** (they touch different files)
-  - **Session A — `agentbus-core`:** Chunker -> FTS5 hybrid search -> RRF -> TTL cache -> event log -> snapshots -> WAL writer queue
-  - **Session B — `agentbus-eval` skeleton:** Harness scaffold, condition stubs (A/B/C), benchmark task loader
+  - **Session A — agentbus-core:** Chunker -> FTS5 hybrid search -> RRF -> TTL cache -> event log -> snapshots -> WAL writer queue
+  - **Session B — agentbus-eval skeleton:** Harness scaffold, condition stubs (A/B/C), benchmark task loader
 - [ ] Do **not** start adapters yet — they depend on the core API being stable
 - [ ] Both sessions run against the failing tests from Step 5; green tests = done
 
@@ -221,7 +225,7 @@ Track these two metrics after every phase:
 
 ## Next Actions (as of 2026-10-18)
 
-> **Steps 1–6 complete. plan.md reviewed and committed. Step 7 (Hooks) next.**
+> **Steps 1–7 complete. Enforced hooks active and tested. Step 8 (Parallel Implementation) next.**
 
 1. ✅ ~~Create `CLAUDE.md`~~ — done
 2. ✅ ~~Create `intent/intent.md`~~ — done
@@ -229,7 +233,8 @@ Track these two metrics after every phase:
 4. ✅ ~~Write `spec.md`~~ — done
 5. ✅ ~~Write failing tests (Step 5)~~: `Makefile`, `tests/test_concurrency.py`, `tests/test_crash_safety.py`, `.github/workflows/ci.yml` — done
 6. ✅ ~~Plan Phase 1 Core Store (Step 6)~~: plan.md written, grilled, reviewed, and committed — done
-7. **Hooks (Step 7)**: Add git/pre-commit or execution hooks to enforce licensing (block context-mode reading) and test integrity (block test edits during fix tasks).
+7. ✅ ~~Hooks (Step 7)~~: pre-commit hook, Makefile target, and verified tests — done
+8. **Parallel implementation (Step 8)**: Open parallel sessions for Phase 1 Core Store (agentbus-core) and evaluation harness skeleton (agentbus-eval).
 
 ---
 
