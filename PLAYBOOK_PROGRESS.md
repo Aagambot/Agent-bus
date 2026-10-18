@@ -3,7 +3,7 @@
 > **What this file is:** A living tracker that maps the playbook's dependency-ordered steps onto the `agentbus` PRD.
 > Update the status column after each step completes. The "Next Actions" section always reflects the single next concrete thing to do.
 >
-> **Last updated:** 2026-10-17 — Steps 1–4 complete ✅ | **Step 5 next**
+> **Last updated:** 2026-10-18 — Steps 1–5 complete ✅ | **Step 6 next**
 
 ---
 
@@ -72,7 +72,7 @@
 
 ### Step 4 — `spec.md` with licensing + security skills (depends on Steps 2 & 3)
 **Playbook play:** Requirements and design
-**Status:** ✅ Done — **pending human review of 9 SEC flags + 4 LIC flags before Step 5**
+**Status:** ✅ Done
 
 **What was done:**
 - [x] Loaded security and licensing context from PRD + Phase 0 findings
@@ -82,24 +82,23 @@
 - [x] Licensing skill pass flagged 4 concerns: [LIC-1] independent impl → [LIC-4] bridge legal review
 - [x] 6 open design decisions (DD-1 → DD-6) documented for human sign-off
 
-> 📍 **Human action required:** Open `spec.md` and review all `[SEC-N]` and `[LIC-N]` sections.
-> Tick the `Sign-off: ☒` checkbox for each before Step 5 starts.
-> At minimum, review SEC-1 (ACL), SEC-3 (secrets), SEC-4 (prompt injection), and LIC-4 (bridge legal).
-
 **Why now:** Policy applied while the spec is written is cheaper than retrofitting. The `intent.md` + `spec.md` pair is the audit trail.
 
 ---
 
 ### Step 5 — Feedback loop: failing tests first (depends on Step 4)
 **Playbook play:** Feedback loop
-**Status:** 🔲 Not Started — ready to begin after human review of spec.md flags
+**Status:** ✅ Done
 
-**What to do:**
-- [ ] Write `Makefile` with a `test` target (`pytest -x --tb=short`)
-- [ ] Write **concurrency stress test** (8 readers + 4 writers, 60 s, assert zero lock errors) — must fail now
-- [ ] Write **kill-mid-write test** (SIGKILL during a write, re-open DB, assert integrity) — must fail now
-- [ ] Confirm both tests run and fail cleanly before any implementation
-- [ ] Add tests to CI (GitHub Actions or equivalent)
+**What was done:**
+- [x] Created `pyproject.toml` with Python >=3.10 requirements, extras, and pytest config
+- [x] Wrote `Makefile` with `test`, `test-concurrency`, `test-crash-safety`, and `coverage` targets
+- [x] Wrote **concurrency stress test** (`tests/test_concurrency.py`, 8 readers + 4 writers, 60 s default, assert zero lock errors) — verified fails cleanly before implementation
+- [x] Wrote **kill-mid-write test** (`tests/test_crash_safety.py`, SIGKILL / TerminateProcess mid-write, re-open DB, assert integrity) — verified fails cleanly before implementation
+- [x] Confirmed both tests run via `pytest` and fail cleanly before any implementation
+- [x] Added test matrix to CI (`.github/workflows/ci.yml` on Python 3.10-3.12 across Ubuntu, macOS, Windows)
+
+**Why before code:** Concurrency bugs are subtle. Giving Claude a way to verify its own work catches them during implementation, not after. These tests encode NFR-2 and NFR-6 as runnable checks.
 
 **Why before code:** Concurrency bugs are subtle. Giving Claude a way to verify its own work catches them during implementation, not after. These tests encode NFR-2 and NFR-6 as runnable checks.
 
@@ -223,30 +222,16 @@ Track these two metrics after every phase:
 
 ---
 
-## Next Actions (as of 2026-10-17)
+## Next Actions (as of 2026-10-18)
 
-> **Steps 1–4 complete. Step 4 spec is written and awaiting human review.**
+> **Steps 1–5 complete. Concurrency and crash-safety tests written and failing cleanly. Step 6 (`plan.md`) next.**
 
 1. ✅ ~~Create `CLAUDE.md`~~ — done
 2. ✅ ~~Create `intent/intent.md`~~ — done
 3. ✅ ~~Phase 0 researcher subagent~~ — done
 4. ✅ ~~Write `spec.md`~~ — done
-
-### ⚠️ Human review required before Step 5
-
-Open [`spec.md`](spec.md) and review the flagged items in **§6 Security Specification** and **§7 Licensing Specification**. Tick the `Sign-off` box for each.
-
-Minimum sign-offs before Step 5:
-- SEC-1 (Namespace ACL enforcement)
-- SEC-2 (Single writer queue)
-- SEC-3 (Secret redaction)
-- SEC-4 (Prompt injection)
-- LIC-1 (Independent implementation)
-- LIC-4 (Bridge legal review — consult lawyer before v0.1)
-
-Also resolve DD-1 through DD-6 (open design decisions in `spec.md` §8).
-
-5. **Write failing tests** (Step 5): `make test`, concurrency stress test (8 readers + 4 writers), kill-mid-write test — all written failing before any implementation.
+5. ✅ ~~Write failing tests (Step 5)~~: `Makefile`, `tests/test_concurrency.py`, `tests/test_crash_safety.py`, `.github/workflows/ci.yml` — done
+6. **Plan Phase 1 Core Store** (Step 6): Use plan mode to produce `plan.md` covering `agentbus-core` file layout, implementation order, and mapping to FR-1..12 and NFR-1, NFR-6.
 
 ---
 
