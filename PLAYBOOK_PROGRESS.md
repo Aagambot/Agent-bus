@@ -3,7 +3,7 @@
 > **What this file is:** A living tracker that maps the playbook's dependency-ordered steps onto the `agentbus` PRD.
 > Update the status column after each step completes. The "Next Actions" section always reflects the single next concrete thing to do.
 >
-> **Last updated:** 2026-10-18 — Steps 1–5 complete ✅ | **Step 6 next**
+> **Last updated:** 2026-10-18 — Steps 1–6 complete ✅ | **Step 7 next**
 
 ---
 
@@ -104,19 +104,16 @@
 
 ---
 
-### Step 6 — `plan.md` for Phase 1 Core Store (depends on Step 5)
+### Step 6 — plan.md for Phase 1 Core Store (depends on Step 5)
 **Playbook play:** Plan mode
-**Status:** Blocked on Step 5
+**Status:** ✅ Done
 
-**What to do:**
-- [ ] Use Claude in **plan mode** (output only, no edits)
-- [ ] Produce `plan.md` covering Phase 1 (`agentbus-core`):
-  - Files to create and their purpose
-  - Order of implementation with justification
-  - Risks and proofs (how each risk is mitigated)
-  - Mapping to FR-1 through FR-12 and NFR-1, NFR-6
-- [ ] **Human review + commit `plan.md`** before any code is written
-- [ ] Later reviews will diff implementation against this plan
+**What was done:**
+- [x] Used plan mode and /grill-me deep-dive to produce plan.md
+- [x] Resolved 5 critical edge-case risks: hybrid multi-process/thread concurrency, sync/async dual API, atomic batch indexing, safe fallback chunk slicing, and permissive reader default for test compatibility
+- [x] Specified exact file layout under src/agentbus/core/ (12 modules)
+- [x] Mapped all requirements to FR-1..12 and NFR-1, NFR-6
+- [x] Human review completed and plan.md committed
 
 **Why:** Nothing gets implemented without an accepted plan. The commit timestamp is the audit-trail anchor.
 
@@ -224,14 +221,15 @@ Track these two metrics after every phase:
 
 ## Next Actions (as of 2026-10-18)
 
-> **Steps 1–5 complete. Concurrency and crash-safety tests written and failing cleanly. Step 6 (`plan.md`) next.**
+> **Steps 1–6 complete. plan.md reviewed and committed. Step 7 (Hooks) next.**
 
 1. ✅ ~~Create `CLAUDE.md`~~ — done
 2. ✅ ~~Create `intent/intent.md`~~ — done
 3. ✅ ~~Phase 0 researcher subagent~~ — done
 4. ✅ ~~Write `spec.md`~~ — done
 5. ✅ ~~Write failing tests (Step 5)~~: `Makefile`, `tests/test_concurrency.py`, `tests/test_crash_safety.py`, `.github/workflows/ci.yml` — done
-6. **Plan Phase 1 Core Store** (Step 6): Use plan mode to produce `plan.md` covering `agentbus-core` file layout, implementation order, and mapping to FR-1..12 and NFR-1, NFR-6.
+6. ✅ ~~Plan Phase 1 Core Store (Step 6)~~: plan.md written, grilled, reviewed, and committed — done
+7. **Hooks (Step 7)**: Add git/pre-commit or execution hooks to enforce licensing (block context-mode reading) and test integrity (block test edits during fix tasks).
 
 ---
 
