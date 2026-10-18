@@ -74,7 +74,7 @@ class EvalHarness:
         lines = [
             '# agentbus Benchmark Evaluation Report (Phase 3)',
             '',
-            '> Evaluated across 3 conditions: **Condition A** (Full Cumulative Transcript), **Condition B** (LLM Summary), and **Condition C** (gentbus shared memory).',
+            '> Evaluated across 3 conditions: **Condition A** (Full Cumulative Transcript), **Condition B** (LLM Summary), and **Condition C** (agentbus shared memory).',
             '',
             '| Task ID | Task Name | Runs | Cond A Tokens (95% CI) | Cond B Tokens | Cond C Tokens (95% CI) | Token Reduction | Success Parity (C / A) | Recall@5 (C) | MRR (C) |',
             '| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |',
@@ -92,7 +92,7 @@ class EvalHarness:
         lines.extend([
             '',
             '## Summary of Findings',
-            '- **Token Efficiency:** Condition C (gentbus) consistently reduces inter-agent handoff token consumption by **> 50%** relative to Condition A.',
+            '- **Token Efficiency:** Condition C (agentbus) consistently reduces inter-agent handoff token consumption by **> 50%** relative to Condition A.',
             '- **Information Defensibility:** Condition C achieves **100% Recall@5** on critical domain entities, outperforming lossy summarization (Condition B).',
             '- **Deterministic Sub-millisecond WAL Access:** Zero database locks or access errors recorded under benchmark load.',
             '',
