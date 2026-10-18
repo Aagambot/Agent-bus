@@ -27,6 +27,7 @@ def load_all_tasks(tasks_dir: Path | None = None) -> List[EvalTask]:
     target_dir = tasks_dir or Path(__file__).parent / "tasks"
     tasks = []
     if target_dir.exists():
-        for json_file in sorted(target_dir.glob("*.json")):
+        files = sorted(target_dir.glob("*.json"), key=lambda p: (0 if "research" in p.name else 1, p.name))
+        for json_file in files:
             tasks.append(load_task_from_file(json_file))
     return tasks

@@ -1,0 +1,33 @@
+{
+  "task_id": "incident_response_03",
+  "name": "Production SRE Incident Debugging",
+  "description": "Multi-agent triage of 504 Gateway Timeouts in payment processing pipeline.",
+  "initial_context": "# Incident INC-8821: High Payment Gateway Latency\n\nTriggered at 14:22 UTC. P99 latency exceeded 4500ms on /v1/charges.",
+  "steps": [
+    {
+      "agent": "metrics_analyst",
+      "content": "## Metrics and Telemetry Analysis\n\nDatabase connection pool saturation reached 100% on payments-primary cluster. Read replica lag spiked to 850ms at 14:28 UTC. Identified connection leak in transaction rollback handler.",
+      "query": "connection pool saturation payments-primary replica lag"
+    },
+    {
+      "agent": "log_investigator",
+      "content": "## Distributed Traces and Error Logs\n\nFound unhandled ConnectionResetError in StripeWebhookProcessor worker threads. Socket timeouts set to 60s caused 120 worker threads to hang indefinitely without returning connections to pool.",
+      "query": "ConnectionResetError StripeWebhookProcessor hang"
+    },
+    {
+      "agent": "incident_commander",
+      "content": "## Incident Mitigation and Resolution\n\nExecuted hotfix deployment \u000b2.4.1: reduced socket timeout to 5s and wrapped rollback in \try...finally connection release block. Pool utilization normalized to 18% within 2 minutes.",
+      "query": "hotfix deployment v2.4.1 pool utilization normalized"
+    }
+  ],
+  "expected_findings": [
+    "payments-primary",
+    "ConnectionResetError",
+    "hotfix v2.4.1",
+    "14:22 UTC"
+  ],
+  "metadata": {
+    "domain": "devops_sre",
+    "agents_count": 3
+  }
+}

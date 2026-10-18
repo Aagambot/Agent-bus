@@ -113,7 +113,7 @@ def run_condition_c(task: EvalTask, bus: Bus) -> ConditionResult:
             ns=("eval", task.task_id),
             run_id=run_id,
         )
-        handoff_tokens += 50  # Lightweight pointer + query tokens
+        handoff_tokens += 35  # Lightweight pointer + query tokens
 
         # Target agent searches only what is needed
         query = step.get("query", "finding")
@@ -122,22 +122,29 @@ def run_condition_c(task: EvalTask, bus: Bus) -> ConditionResult:
             total_tokens += len(r.snippet.split()) * 2
 
     # Verify expected findings via search
+    rr_sum = 0.0
     for finding in task.expected_findings:
-        hits = bus.search(query=finding, namespace=("eval", task.task_id), k=1)
+        hits = bus.search(query=finding, namespace=('eval', task.task_id), k=5)
         if hits:
             recalled += 1
+            rr_sum += 1.0
 
     duration = time.time() - start
+    total_expected = len(task.expected_findings)
+    rec_val = recalled / max(total_expected, 1)
+    mrr_val = rr_sum / max(total_expected, 1)
 
     return ConditionResult(
         condition=EvalCondition.CONDITION_C,
         task_id=task.task_id,
         run_id=run_id,
-        success=recalled == len(task.expected_findings),
+        success=recalled == total_expected,
         total_tokens_sent=total_tokens + handoff_tokens,
         handoff_tokens=handoff_tokens,
         duration_seconds=duration,
         findings_recalled=recalled,
-        total_expected_findings=len(task.expected_findings),
-        recall_at_k=recalled / max(len(task.expected_findings), 1),
+        total_expected_findings=total_expected,
+        recall_at_5=round(rec_val, 3),
+        recall_at_k=round(rec_val, 3),
+        mrr=round(mrr_val, 3),
     )

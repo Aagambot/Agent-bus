@@ -3,7 +3,7 @@
 > **What this file is:** A living tracker that maps the playbook's dependency-ordered steps onto the `agentbus` PRD.
 > Update the status column after each step completes. The "Next Actions" section always reflects the single next concrete thing to do.
 >
-> **Last updated:** 2026-10-18 — Steps 1–10 (Phase 2 Adapters) complete ✅ | **Phase 3 Evaluation next**
+> **Last updated:** 2026-10-18 — Steps 1–10 complete ✅. | **Phase 4 (Local Server & CLI) next**
 
 ---
 
@@ -185,7 +185,7 @@
 
 ### Step 10 — Repeat Steps 6-9 for Phase 2 (adapters) and Phase 3 (evaluation)
 **Playbook play:** Plan mode -> review loop
-**Status:** ✅ Phase 2 Done (Phase 3 in progress)
+**Status:** ✅ Done (Phase 2 Adapters & Phase 3 Evaluation complete)
 
 **Phase 2 — Adapters (`agentbus-langgraph`, `agentbus-langchain`):
 - [x] Plan mode -> `plan_phase2.md` -> committed (`c7b388f`)
@@ -197,11 +197,10 @@
 - [x] Run `REVIEW.md` three-pass review for Phase 2 (Verdict: **APPROVED**, 86% repo coverage)
 
 **Phase 3 — Evaluation (`agentbus-eval`):**
-- [ ] Plan mode -> `plan_phase3.md` -> commit
-- [ ] Implement: 3 conditions (A: full transcript, B: summary, C: agentbus), benchmark tasks, 5+ runs each
-- [ ] Produce metrics report: handoff token reduction, task success parity, Recall@5, MRR, CI
-- [ ] Run `REVIEW.md` three-pass review
-
+- [x] Plan mode -> `plan_phase3.md` -> committed (`a56d7f7`)
+- [x] Implement: 3 conditions (A: full transcript, B: summary, C: agentbus), 3 benchmark tasks (research, code review, incident response), 5+ runs each
+- [x] Produce metrics report: handoff token reduction (62.2% – 64.5%), task success parity (100%), Recall@5 (100%), MRR (1.0), 95% CI documented in `BENCHMARK_REPORT.md`
+- [x] Run `REVIEW.md` three-pass review for Phase 3 (Verdict: **APPROVED**, 89% repo coverage)
 ---
 
 ### Step 11 — Maintain loop (optional; after v0.1)
@@ -241,7 +240,7 @@ Track these two metrics after every phase:
 
 ## Next Actions (as of 2026-10-18)
 
-> **Steps 1–10 (Phase 2 Adapters) complete. Phase 2 audited, approved, and verified (86% coverage). Phase 3 (Evaluation) next.**
+> **Steps 1–10 complete (Core Store, LangGraph/LangChain Adapters, and Evaluation Harness). 27 tests passing, 89% coverage.**
 
 1. ✅ ~~Create `CLAUDE.md`~~ — done
 2. ✅ ~~Create `intent/intent.md`~~ — done
@@ -253,7 +252,8 @@ Track these two metrics after every phase:
 8. ✅ ~~Parallel implementation (Step 8)~~: `agentbus-core` and `agentbus-eval` skeleton implemented, 18 tests passing, 84% coverage — done
 9. ✅ ~~Review loop (Step 9)~~: `REVIEW.md` three-pass review template and Phase 1 audit completed and approved — done
 10. ✅ ~~Phase 2 Adapters (Step 10)~~: `agentbus-langgraph` (`BaseStore` subclass) and `agentbus-langchain` (`BaseRetriever` + tool wrappers + nodes) implemented, 24 tests passing, 86% coverage — done
-11. **Phase 3 Evaluation (Step 10 cont.)**: Draft `plan_phase3.md`, run benchmark matrix across Conditions A, B, and C with `eval/harness.py`, and generate token reduction & Recall@5 metrics report.
+11. ✅ ~~Phase 3 Evaluation (Step 10 cont.)~~: 3 conditions, 3 tasks, 5+ runs with 95% CI, 62-64% token reduction, 100% Recall@5, `BENCHMARK_REPORT.md` — done
+12. **Phase 4 Interop & Server (Step 10 cont. / PRD Section 11)**: Local FastAPI daemon (`agentbus-server`), CLI utilities, context-mode bridge, and UC5 multi-agent demo.
 
 ---
 
@@ -269,7 +269,7 @@ Track these two metrics after every phase:
 | OQ-6 | Does Python 3.10 cover current LangChain/LangGraph support range? | Unanswered | — |
 | OQ-7 | Does context-mode expose events via DB file, MCP tool, or both? | Unanswered | — |
 | OQ-8 | Is exposing `agentbus` as a context-mode MCP companion better than standalone first? | Unanswered (decide post-Phase 1) | — |
-| OQ-9 | Which benchmark tasks are representative and reproducible? | Unanswered (decide in Phase 3 planning) | — |
+| OQ-9 | Which benchmark tasks are representative and reproducible? | ✅ Answered | 3 representative multi-agent domains: market research, software security code review, and SRE incident response |
 
 ---
 

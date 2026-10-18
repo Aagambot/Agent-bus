@@ -1,0 +1,33 @@
+{
+  "task_id": "code_review_handoff_02",
+  "name": "Security Audit and Refactoring Handoff",
+  "description": "Multi-agent code review, vulnerability assessment, and regression testing.",
+  "initial_context": "# Pull Request #142: Authentication and Token Refresh\n\nAdds JWT refresh token rotation and Redis token blacklist.",
+  "steps": [
+    {
+      "agent": "security_auditor",
+      "content": "## Vulnerability Audit Finding\n\nIdentified CWE-384: Session Fixation risk in /auth/refresh endpoint. In-memory token expiration window is 300 seconds without sliding invalidation. Recommends enforcing nonce validation on redis key \u0007uth:blacklist:{token_id}.",
+      "query": "Session Fixation CWE-384 refresh endpoint"
+    },
+    {
+      "agent": "software_architect",
+      "content": "## Architecture and Storage Revision\n\nRedesigned token blacklist storage to use Redis pipeline with atomic SETEX and 300s TTL. Updated signature verification in \u000berify_token_header() to reject unverified nonces.",
+      "query": "Redis pipeline SETEX atomic blacklist"
+    },
+    {
+      "agent": "test_engineer",
+      "content": "## Test Automation and Invariants\n\nAuthored 8 concurrency tests validating replay protection under 50 simultaneous refresh calls. Confirmed zero race conditions and 100% rejection of recycled tokens.",
+      "query": "replay protection simultaneous refresh tests"
+    }
+  ],
+  "expected_findings": [
+    "CWE-384",
+    "auth:blacklist:{token_id}",
+    "SETEX",
+    "simultaneous refresh"
+  ],
+  "metadata": {
+    "domain": "software_security",
+    "agents_count": 3
+  }
+}
