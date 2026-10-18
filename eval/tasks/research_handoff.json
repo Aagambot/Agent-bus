@@ -1,0 +1,32 @@
+{
+  "task_id": "research_handoff_01",
+  "name": "Competitive Analysis Handoff",
+  "description": "Multi-agent research and synthesis on market competitors.",
+  "initial_context": "# Market Research Overview\n\nInitial findings on Acme Corp and Beta LLC revenue, profit margins, and growth trajectory in Q3 2026.",
+  "steps": [
+    {
+      "agent": "researcher_1",
+      "content": "## Acme Corp Financials\n\nAcme Corp reported Q3 revenue growth of 12.4% year-over-year. Operating margin expanded to 21.8%. Key risk identified is supply chain concentration in APAC region.",
+      "query": "Acme Corp revenue growth"
+    },
+    {
+      "agent": "researcher_2",
+      "content": "## Beta LLC Financials\n\nBeta LLC reported Q3 revenue growth of 8.1% with gross margin at 44.5%. Debt-to-equity ratio remains stable at 0.45. Key catalyst is enterprise SaaS transition.",
+      "query": "Beta LLC revenue growth"
+    },
+    {
+      "agent": "synthesizer",
+      "content": "## Synthesis and Investment Recommendation\n\nComparing Acme Corp (12.4% growth) and Beta LLC (8.1% growth). Acme demonstrates higher top-line acceleration while Beta offers greater margin defensibility.",
+      "query": "comparing Acme and Beta"
+    }
+  ],
+  "expected_findings": [
+    "12.4%",
+    "8.1%",
+    "APAC region"
+  ],
+  "metadata": {
+    "domain": "finance",
+    "agents_count": 3
+  }
+}

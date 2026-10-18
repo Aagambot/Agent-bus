@@ -3,7 +3,7 @@
 > **What this file is:** A living tracker that maps the playbook's dependency-ordered steps onto the `agentbus` PRD.
 > Update the status column after each step completes. The "Next Actions" section always reflects the single next concrete thing to do.
 >
-> **Last updated:** 2026-10-18 — Steps 1–7 complete ✅ | **Step 8 next**
+> **Last updated:** 2026-10-18 — Steps 1–8 complete ✅ | **Step 9 next**
 
 ---
 
@@ -139,18 +139,31 @@
 
 ### Step 8 — Parallel implementation: core store + eval harness skeleton (depends on Steps 6 & 7)
 **Playbook play:** Parallel sessions
-**Status:** 🔲 Not Started — ready to begin (Steps 6 & 7 complete)
+**Status:** ✅ Done
 
-**What to do:**
-- [ ] Open **2 parallel worktree sessions** (they touch different files)
-  - **Session A — agentbus-core:** Chunker -> FTS5 hybrid search -> RRF -> TTL cache -> event log -> snapshots -> WAL writer queue
-  - **Session B — agentbus-eval skeleton:** Harness scaffold, condition stubs (A/B/C), benchmark task loader
-- [ ] Do **not** start adapters yet — they depend on the core API being stable
-- [ ] Both sessions run against the failing tests from Step 5; green tests = done
+**What was done:**
+- [x] **Session A — `agentbus-core` implemented:**
+  - `models.py`: SearchResult, Event, SessionGuide, TrustLabel, IndexResult
+  - `db.py`: SQLite WAL configuration, pragmas, schema DDL, capability verification
+  - `writer_queue.py`: Dedicated background writer thread with idle connection cleanup & retry logic (zero lock errors under parallel stress)
+  - `acl.py`: NamespaceACL enforcement for global, team, run, and private agent scopes
+  - 
+  - `redactor.py`: SecretRedactor masking credentials prior to storage
+  - `chunker.py`: Heading-aware markdown chunker preserving code blocks under 4096-byte ceiling with fallback subsplitting
+  - `fts5.py`: BM25-scored Porter + Trigram search with snippet generation
+  - 
+  - `rrf.py`: Reciprocal Rank Fusion (k=60)
+  - `ttl_cache.py`: Content hash deduplication and URL TTL management
+  - `event_log.py`: Append-only event store with P1-P4 priorities and compound cursor pagination
+  - `snapshot.py`: Budgeted snapshot builder and restore session guide
+  - `bus.py`: Public Bus facade with sync and async companion methods
+- [x] **Session B — `agentbus-eval` skeleton implemented:**
+  - eval/`models.py`, eval/loader.py, eval/conditions.py (Conditions A, B, C), eval/harness.py, eval/tasks/
+- [x] Concurrency stress test (tests/test_concurrency.py, 8 readers + 4 writers, 60s) passed with 0 lock errors
+- [x] Crash-safety test (tests/test_crash_safety.py, kill mid-write) passed with clean integrity check
+- [x] Core test suite (tests/test_core.py, tests/test_eval.py) passed with 84% test coverage (exceeding NFR-8)
 
-**Why 2 sessions:** They touch different files (no merge conflicts). The playbook advises <= 3 parallel sessions; 2 is safe here.
-
-**Exit criterion:** Concurrency stress test and kill-mid-write test both pass.
+**Exit criterion met:** Concurrency stress test and kill-mid-write test both pass cleanly.
 
 ---
 
@@ -225,7 +238,7 @@ Track these two metrics after every phase:
 
 ## Next Actions (as of 2026-10-18)
 
-> **Steps 1–7 complete. Enforced hooks active and tested. Step 8 (Parallel Implementation) next.**
+> **Steps 1–8 complete. Phase 1 Core Store and Eval skeleton implemented and verified green. Step 9 (REVIEW.md) next.**
 
 1. ✅ ~~Create `CLAUDE.md`~~ — done
 2. ✅ ~~Create `intent/intent.md`~~ — done
@@ -234,7 +247,8 @@ Track these two metrics after every phase:
 5. ✅ ~~Write failing tests (Step 5)~~: `Makefile`, `tests/test_concurrency.py`, `tests/test_crash_safety.py`, `.github/workflows/ci.yml` — done
 6. ✅ ~~Plan Phase 1 Core Store (Step 6)~~: plan.md written, grilled, reviewed, and committed — done
 7. ✅ ~~Hooks (Step 7)~~: pre-commit hook, Makefile target, and verified tests — done
-8. **Parallel implementation (Step 8)**: Open parallel sessions for Phase 1 Core Store (agentbus-core) and evaluation harness skeleton (agentbus-eval).
+8. ✅ ~~Parallel implementation (Step 8)~~: `agentbus-core` and `agentbus-eval` skeleton implemented, 18 tests passing, 84% coverage — done
+9. **Review loop (Step 9)**: Create REVIEW.md three-pass review for Phase 1 Core Store.
 
 ---
 
