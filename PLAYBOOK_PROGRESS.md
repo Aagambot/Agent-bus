@@ -282,11 +282,11 @@ Agent-bus/
 ├── Makefile                   <- Step 5
 ├── intent/
 │   └── intent.md              <- Steps 2 & 3
-├── spec.md                    <- Step 4
-├── plan.md                    <- Step 6 (Phase 1)
-├── plan_phase2.md             <- Step 10 (Phase 2)
-├── plan_phase3.md             <- Step 10 (Phase 3)
-├── REVIEW.md                  <- Step 9
+├── README.md                  <- Project overview, quickstart & docs index
+├── docs/                      <- Organized documentation
+│   ├── specs/                 <- Step 4 (prd.md, spec.md)
+│   ├── plans/                 <- Steps 6 & 10 (plan_phase1.md, plan_phase2.md, plan_phase3.md)
+│   └── reports/               <- Steps 9 & 10 (benchmark_report.md, review.md)
 ├── .github/
 │   └── workflows/
 │       └── ci.yml             <- Steps 5 & 9

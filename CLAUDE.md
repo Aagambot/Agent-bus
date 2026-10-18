@@ -118,10 +118,12 @@ src/agentbus/          # library source
 tests/                 # pytest tests (do not edit to make them pass)
 eval/                  # evaluation harness (separate from agent evals)
 intent/                # intent.md — the short artifact the chain starts from
-spec.md                # requirements and design (generated from intent + discovery)
-plan.md                # Phase 1 implementation plan (commit before coding)
-REVIEW.md              # three-pass PR review template
+README.md              # project overview, quickstart & docs index
 PLAYBOOK_PROGRESS.md   # playbook adoption tracker (update after each step)
+docs/                  # organized documentation
+  specs/               # prd.md, spec.md
+  plans/               # plan_phase1.md, plan_phase2.md, plan_phase3.md
+  reports/             # benchmark_report.md, review.md
 ```
 
 ---
