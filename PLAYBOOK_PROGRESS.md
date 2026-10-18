@@ -3,7 +3,7 @@
 > **What this file is:** A living tracker that maps the playbook's dependency-ordered steps onto the `agentbus` PRD.
 > Update the status column after each step completes. The "Next Actions" section always reflects the single next concrete thing to do.
 >
-> **Last updated:** 2026-10-18 — Steps 1–9 complete ✅ | **Step 10 next**
+> **Last updated:** 2026-10-18 — Steps 1–10 (Phase 2 Adapters) complete ✅ | **Phase 3 Evaluation next**
 
 ---
 
@@ -185,13 +185,16 @@
 
 ### Step 10 — Repeat Steps 6-9 for Phase 2 (adapters) and Phase 3 (evaluation)
 **Playbook play:** Plan mode -> review loop
-**Status:** Blocked on Step 9
+**Status:** ✅ Phase 2 Done (Phase 3 in progress)
 
-**Phase 2 — Adapters (`agentbus-langgraph`, `agentbus-langchain`):**
-- [ ] Plan mode -> `plan_phase2.md` -> commit
-- [ ] Implement: `BaseStore`, `BaseRetriever`, tools, namespaces/ACL, handoff primitive
-- [ ] FR-15 through FR-23 pass; example graph runs end-to-end
-- [ ] Run `REVIEW.md` three-pass review
+**Phase 2 — Adapters (`agentbus-langgraph`, `agentbus-langchain`):
+- [x] Plan mode -> `plan_phase2.md` -> committed (`c7b388f`)
+- [x] Implement: `AgentBusStore(BaseStore)` with full `batch()` and `abatch()` support (`GetOp`, `PutOp`, `SearchOp`, `ListNamespacesOp`)
+- [x] Implement: `AgentBusRetriever(BaseRetriever)` with non-suppressible `trust_label` enforcement (`[SEC-5]`)
+- [x] Implement: LangChain tools (`bus_search`, `bus_index`, `bus_handoff`, `bus_log_event`)
+- [x] Implement: LangGraph ready-made nodes (`create_index_node`, `create_retrieve_node`, `create_handoff_node`)
+- [x] FR-15 through FR-23 pass; 2-agent LangGraph workflow verified end-to-end (`tests/test_end_to_end_graph.py`)
+- [x] Run `REVIEW.md` three-pass review for Phase 2 (Verdict: **APPROVED**, 86% repo coverage)
 
 **Phase 3 — Evaluation (`agentbus-eval`):**
 - [ ] Plan mode -> `plan_phase3.md` -> commit
@@ -238,7 +241,7 @@ Track these two metrics after every phase:
 
 ## Next Actions (as of 2026-10-18)
 
-> **Steps 1–9 complete. Phase 1 Core Store audited, approved, and committed. Step 10 (Phase 2 Adapters) next.**
+> **Steps 1–10 (Phase 2 Adapters) complete. Phase 2 audited, approved, and verified (86% coverage). Phase 3 (Evaluation) next.**
 
 1. ✅ ~~Create `CLAUDE.md`~~ — done
 2. ✅ ~~Create `intent/intent.md`~~ — done
@@ -249,7 +252,8 @@ Track these two metrics after every phase:
 7. ✅ ~~Hooks (Step 7)~~: pre-commit hook, Makefile target, and verified tests — done
 8. ✅ ~~Parallel implementation (Step 8)~~: `agentbus-core` and `agentbus-eval` skeleton implemented, 18 tests passing, 84% coverage — done
 9. ✅ ~~Review loop (Step 9)~~: `REVIEW.md` three-pass review template and Phase 1 audit completed and approved — done
-10. **Phase 2 Adapters (Step 10)**: Plan and implement `agentbus-langgraph` (`BaseStore` subclass) and `agentbus-langchain` (`BaseRetriever` + tool wrappers).
+10. ✅ ~~Phase 2 Adapters (Step 10)~~: `agentbus-langgraph` (`BaseStore` subclass) and `agentbus-langchain` (`BaseRetriever` + tool wrappers + nodes) implemented, 24 tests passing, 86% coverage — done
+11. **Phase 3 Evaluation (Step 10 cont.)**: Draft `plan_phase3.md`, run benchmark matrix across Conditions A, B, and C with `eval/harness.py`, and generate token reduction & Recall@5 metrics report.
 
 ---
 

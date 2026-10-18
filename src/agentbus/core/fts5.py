@@ -17,7 +17,7 @@ def sanitize_fts5_query(query: str) -> str:
     if not tokens:
         return ""
     # Wrap each token in double quotes for exact term safety
-    return " ".join(f'"{t}"' for t in tokens)
+    return " OR ".join(f'"{t}"' for t in tokens)
 
 
 def sanitize_trigram_query(query: str) -> str:
@@ -26,7 +26,7 @@ def sanitize_trigram_query(query: str) -> str:
     tokens = [t for t in cleaned.split() if len(t) >= 3 and t.upper() not in {"AND", "OR", "NOT"}]
     if not tokens:
         return ""
-    return " ".join(f'"{t}"' for t in tokens)
+    return " OR ".join(f'"{t}"' for t in tokens)
 
 
 def search_porter(
